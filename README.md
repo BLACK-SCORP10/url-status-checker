@@ -51,5 +51,3 @@ python status_checker.py -l urls.txt -o results.txt
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-```
-
