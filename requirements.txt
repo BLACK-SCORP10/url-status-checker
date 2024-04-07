@@ -1,0 +1,4 @@
+httpx
+argparse
+tqdm
+colorama
