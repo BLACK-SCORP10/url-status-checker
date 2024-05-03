@@ -68,7 +68,7 @@ async def main():
         print("No input provided. Use -d or -l option.")
         return
 
-    async with httpx.AsyncClient() as session:
+    async with httpx.AsyncClient(follow_redirects=True) as session:
         results = {}
         tasks = [check_url_status(session, url_id, url) for url_id, url in enumerate(urls)]
         if len(urls) > 1:
