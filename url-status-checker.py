@@ -3,13 +3,15 @@ import httpx
 import asyncio
 from tqdm import tqdm
 from colorama import Fore, Style
+import socket
+from urllib.parse import urlparse
 
 # Banner
 BANNER = """
 ╔═══════════════════════════════╗
 ║       StatusChecker.py        ║
 ║   Created By: BLACK_SCORP10   ║
-║   Telegram: @BLACK_SCORP10    ║
+║   Enanched By: matteocapricci ║
 ╚═══════════════════════════════╝
 """
 
@@ -23,17 +25,34 @@ COLORS = {
     "Invalid": Fore.WHITE
 }
 
-# Function to check URL status
+# Function to resolve hostname to IP:Port
+def resolve_ip_and_port(url):
+    try:
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        scheme = parsed.scheme
+        port = parsed.port or (443 if scheme == "https" else 80)
+        ip_address = socket.gethostbyname(hostname)
+        return f"{ip_address}:{port}"
+    except Exception:
+        return "IP:Port Not Found"
+
+# Function to check URL status and redirection
 async def check_url_status(session, url_id, url):
     if "://" not in url:
-        url = "https://" + url  # Adding https:// if no protocol is specified
+        url = "https://" + url
     try:
-        response = await session.head(url)
-        return url_id, url, response.status_code
-    except httpx.RequestError:
-        return url_id, url, None
+        response = await session.get(url, follow_redirects=True, timeout=10)
+        final_url = str(response.url)
 
-# Function to parse arguments
+        original_ip_port = resolve_ip_and_port(url)
+        redirect_ip_port = resolve_ip_and_port(final_url) if final_url != url else None
+
+        return url_id, url, response.status_code, final_url if final_url != url else None, original_ip_port, redirect_ip_port
+    except httpx.RequestError:
+        return url_id, url, None, None, None, None
+
+# Argument parser
 def parse_arguments():
     parser = argparse.ArgumentParser(description="URL Status Checker")
     parser.add_argument("-d", "--domain", help="Single domain/URL to check")
@@ -74,13 +93,13 @@ async def main():
         if len(urls) > 1:
             with tqdm(total=len(urls), desc="Checking URLs") as pbar:
                 for coro in asyncio.as_completed(tasks):
-                    url_id, url, status_code = await coro
-                    results[url_id] = (url, status_code)
+                    url_id, url, status, redirect, ip, redirect_ip = await coro
+                    results[url_id] = (url, status, redirect, ip, redirect_ip)
                     pbar.update(1)
         else:
             for coro in asyncio.as_completed(tasks):
-                url_id, url, status_code = await coro
-                results[url_id] = (url, status_code)
+                url_id, url, status, redirect, ip, redirect_ip = await coro
+                results[url_id] = (url, status, redirect, ip, redirect_ip)
 
     status_codes = {
         "1xx": [],
@@ -91,27 +110,29 @@ async def main():
         "Invalid": []
     }
 
-    for url_id, (url, status) in results.items():
+    for url_id, (url, status, redirect, ip, redirect_ip) in results.items():
         if status is not None:
             status_group = str(status)[0] + "xx"
-            status_codes[status_group].append((url, status))
+            status_codes[status_group].append((url, status, redirect, ip, redirect_ip))
         else:
-            status_codes["Invalid"].append((url, "Invalid"))
+            status_codes["Invalid"].append((url, "Invalid", None, "IP:Port Not Found", None))
 
-    for code, urls in status_codes.items():
-        if urls:
+    for code, urls_info in status_codes.items():
+        if urls_info:
             print(COLORS.get(code, Fore.WHITE) + f'===== {code.upper()} =====')
-            for url, status in urls:
-                print(f'[Status : {status}] = {url}')
+            for url, status, redirect, ip, redirect_ip in urls_info:
+                redirect_str = f"[Redirect: {redirect} ({redirect_ip})]" if redirect else "[Redirect: None]"
+                print(f'[Status: {status}] [IP: {ip}] {url} {redirect_str}\n')
             print(Style.RESET_ALL)
 
     if args.output:
         with open(args.output, 'w') as file:
-            for code, urls in status_codes.items():
-                if urls:
+            for code, urls_info in status_codes.items():
+                if urls_info:
                     file.write(f'===== {code.upper()} =====\n')
-                    for url, status in urls:
-                        file.write(f'[Status : {status}] = {url}\n')
+                    for url, status, redirect, ip, redirect_ip in urls_info:
+                        redirect_str = f"[Redirect: {redirect} ({redirect_ip})]" if redirect else "[Redirect: None]"
+                        file.write(f'[Status: {status}] [IP: {ip}] {url} {redirect_str}\n')
 
 if __name__ == "__main__":
     asyncio.run(main())
