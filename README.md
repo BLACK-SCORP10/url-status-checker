@@ -7,14 +7,14 @@
   <br>
 </h1>
 Status Checker is a Python script that checks the status of one or multiple URLs/domains and categorizes them based on their HTTP status codes.
-Version 1.0.0
-Created BY BLACK-SCORP10
-[t.me/BLACK-SCORP10](https://t.me/BLACK_SCORP10)
+Version 2.0.0
 
 ## Features
 
 - Check the status of single or multiple URLs/domains.
 - Asynchronous HTTP requests for improved performance.
+- Follow the Redirections.
+- Track all the involved IP addresses.
 - Color-coded output for better visualization of status codes.
 - Progress bar when checking multiple URLs.
 - Save results to an output file.
