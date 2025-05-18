@@ -48,6 +48,11 @@ python status_checker.py [-h] [-d DOMAIN] [-l LIST] [-o OUTPUT] [-v] [-update]
 - `-v`, `--version`: Display version information.
 - `-update`: Update the tool.
 
+### Using bash watch command:
+```bash
+watch -n 72000 python url-status-checker.py -l url_list
+```
+
 **Example:**
 
 ```bash
