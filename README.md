@@ -3,11 +3,11 @@
   <br>
   <a href=" https://github.com/BLACK-SCORP10/Email-Vulnerablity-Checker.git"><img src="img/url-status-checker-logo.png"></a>
   <br>
-  URL Status Checker v1
+  URL Status Checker v2.1
   <br>
 </h1>
 Status Checker is a Python script that checks the status of one or multiple URLs/domains and categorizes them based on their HTTP status codes.
-Version 2.0.0
+Version 2.1.0
 
 ## Features
 
